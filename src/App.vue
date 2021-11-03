@@ -1,8 +1,11 @@
 <template>
     <div id="app">
         <div class="office">
-            <Map />
-            <SideMenu />
+            <Map
+                @click:table="onClickTable"
+                @click:map="onClickMap"
+            />
+            <SideMenu :isUserOpenned.sync="isUserOpenned" :person="person"/>
         </div>
     </div>
 </template>
@@ -11,12 +14,30 @@
 import Map from "./components/Map.vue";
 import SideMenu from "./components/SideMenu.vue";
 
+import people from '@/assets/data/people.json'
+
 export default {
   name: "App",
   components: {
     Map,
     SideMenu,
   },
+  data() {
+      return {
+          isUserOpenned: false,
+          person: null
+      }
+  },
+  methods: {
+      onClickTable({ tableId }) {
+          this.isUserOpenned = true
+          this.person = people.find(t => t.tableId === tableId) || null
+      },
+      onClickMap() {
+          this.isUserOpenned = false
+          this.person = null
+      }
+  }
 };
 </script>
 
