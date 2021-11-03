@@ -6,19 +6,97 @@
             v-if="!isLoading"
             class="map-root"
         >
-            <!-- map -->
+            <MapSVG ref="svg" />
+
+            <TableSVG v-show="false" ref="table" />
         </div>
         <div v-else>Loading...</div>
     </div>
 </template>
 
 <script>
+import * as d3 from "d3";
+
+import MapSVG from '@/assets/images/map.svg';
+import TableSVG from '@/assets/images/workPlace.svg';
+
+import tables from '@/assets/data/tables.json';
+import legend from '@/assets/data/legend.json';
+
 export default {
+    components: {
+        MapSVG,
+        TableSVG
+    },
     data() {
         return {
             isLoading: false,
+            svg: null,
+            g: null,
+            tableSVG: null,
+            tables: [],
+            legend: []
         };
     },
+    mounted() {
+        this.svg = d3.select(this.$refs.svg)
+        this.g = this.svg.select("g")
+        this.tableSVG = d3.select(this.$refs.table)
+
+        this.tables = tables
+        this.legend = legend
+
+        if (this.g) {
+            this.drawTables()
+            this.initClickListener()
+        } else {
+            console.error('ERROR!')
+        }
+    },
+    methods: {
+        drawTables() {
+            // Создаем группу рабочих мест
+            
+            const svgTablesGroup = this.g.append("g").classed("groupPlaces", true)
+
+
+            this.tables.map((table) => {
+                // Создать группу рабочего стола
+
+                const svgTable  = svgTablesGroup
+                    .append("g")
+                    .attr("transform", `translate(${table.x}, ${table.y}) scale(0.5)`)
+                    .attr('data-tableid', table._id)
+                    .classed('employer-place', true)
+
+
+                svgTable
+                    .append("g")
+                    .attr("transform", `rotate(${table.rotate || 0})`)
+                    .attr("group_id", table.group_id)
+                    .html(this.tableSVG.html())
+                    .attr(
+                        "fill",
+                        legend.find((it) => it.group_id === table.group_id) 
+                            ?.color ?? "transparent"
+                    );
+
+            })
+        },
+        initClickListener() {
+            if (!this.g) return
+
+            this.svg.on('click', (e)=>{
+                try {
+                    const tableId = e.target.closest('[data-tableid]').dataset['tableid'];
+                    this.$emit('click:table', { tableId: +tableId })             
+                } catch (error) {
+                    this.$emit('click:map')
+                }
+            })
+
+        }
+    }
 };
 </script>
 
